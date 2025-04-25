@@ -1,4 +1,4 @@
-                                                                     Employee Management System (EMS)
+                                                Employee Management System (EMS)
 This project is the development of an Employee Management System (EMS) aimed at streamlining employee data management within an organization. The EMS provides a centralized platform for managing employee information, including personal details, contact information, and job-related data. It incorporates role-based access control, ensuring secure and efficient management for both administrators and employees.
 
 Features:
