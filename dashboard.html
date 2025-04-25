@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+
+</head>
+<body>
+  <div class="topbar">
+    <h1>USER MANAGEMENT PORTAL</h1>
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+
+      <button onclick="viewProfile()">View Profile</button>
+      <button onclick="updateProfile()">Update Profile</button>
+
+      <div id="admin-actions">
+        <button onclick="viewEmployees()">View All Employees</button>
+        <button onclick="addEmployee()">Add New Employee</button>
+        <button onclick="showDeleteEmployeeTable()">Delete Employee</button>
+        <button onclick="editEmployees()">Edit Employees</button>
+      </div>
+
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <div id="content">
+      <img src="welcome.jpeg" alt="Welcome page">
+    </div>
+  </div>
+
+  <script>
+    window.onload = function () {
+      const role = localStorage.getItem("role") || "";
+
+
+      if (role !== "admin") {
+        document.getElementById("admin-actions").classList.add("hidden");
+      }
+    };
+
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "loginpage.html";
+    }
+
+    function viewProfile() {
+  const employeeId = localStorage.getItem("employeeId");
+  
+  fetch(`http://localhost:8080/api/profile/${employeeId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data) {
+        const table = `
+          <h2>Profile Details</h2>
+          <table border="1" style="width:100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Name</td>
+                <td>${data.first_name} ${data.last_name}</td>
+              </tr>
+              <tr>
+                <td>Email</td>
+                <td>${data.email}</td>
+              </tr>
+              <tr>
+                <td>Phone</td>
+                <td>${data.phone_number}</td>
+              </tr>
+              <tr>
+                <td>Position</td>
+                <td>${data.position}</td>
+              </tr>
+              <tr>
+                <td>Date Of Birth</td>
+                <td>${data.date_of_birth}</td>
+              </tr>
+              <tr>
+                <td>Department</td>
+                <td>${data.department}</td>
+              </tr>
+              <tr>
+                <td>Joining Date</td>
+                <td>${data.joining_date}</td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+        document.getElementById("content").innerHTML = table;
+      } else {
+        document.getElementById("content").innerHTML = "<p>Profile not found.</p>";
+      }
+    })
+    .catch(error => {
+      console.error("Error fetching profile:", error);
+      alert("Something went wrong while fetching the profile.");
+    });
+}
+
+
+
+function viewEmployees() {
+  fetch("http://localhost:8080/api/employees")
+    .then(res => res.json())
+    .then(data => {
+      if (!data.length) {
+        document.getElementById("content").innerHTML = "<p>No employees found.</p>";
+        return;
+      }
+
+      let table = `
+        <h2>All Employees</h2>
+        <table border="1" style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Position</th>
+              <th>Department</th>
+              <th>DOB</th>
+              <th>Joining Date</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      data.forEach(emp => {
+        table += `
+          <tr>
+            <td>${emp.employee_id}</td>
+            <td>${emp.first_name}</td>
+            <td>${emp.last_name}</td>
+            <td>${emp.email}</td>
+            <td>${emp.phone_number}</td>
+            <td>${emp.position}</td>
+            <td>${emp.department}</td>
+            <td>${emp.date_of_birth}</td>
+            <td>${emp.joining_date}</td>
+          </tr>`;
+      });
+
+      table += `</tbody></table>`;
+      document.getElementById("content").innerHTML = table;
+    })
+    .catch(err => {
+      document.getElementById("content").innerHTML = "<p>Error loading employees.</p>";
+      console.error(err);
+    });
+}
+
+function confirmDelete(employeeId) {
+  const confirmDeletion = confirm("Are you sure you want to delete this employee?");
+  
+  if (confirmDeletion) {
+    fetch(`http://localhost:8080/api/employees/${employeeId}`, {
+      method: 'DELETE',
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(err => {
+          throw new Error(err.error || "Failed to delete employee");
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log("Employee deleted successfully:", data);
+      showDeleteEmployeeTable(); 
+    })
+    .catch(error => {
+      console.error("Error: ", error.message);
+      alert("Error: " + error.message);
+    });
+  } else {
+    console.log("Employee deletion canceled.");
+  }
+}
+
+
+
+function showDeleteEmployeeTable() {
+  fetch("http://localhost:8080/api/employees")
+    .then(res => res.json())
+    .then(data => {
+      if (!data.length) {
+        document.getElementById("content").innerHTML = "<p>No employees found.</p>";
+        return;
+      }
+
+      let table = `
+        <h2>Delete Employees</h2>
+        <table border="1" style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Position</th>
+              <th>Department</th>
+              <th>DOB</th>
+              <th>Joining Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      data.forEach(emp => {
+        table += `
+          <tr>
+            <td>${emp.employee_id}</td>
+            <td>${emp.first_name}</td>
+            <td>${emp.last_name}</td>
+            <td>${emp.email}</td>
+            <td>${emp.phone_number}</td>
+            <td>${emp.position}</td>
+            <td>${emp.department}</td>
+            <td>${emp.date_of_birth}</td>
+            <td>${emp.joining_date}</td>
+            <td><button onclick="confirmDelete(${emp.employee_id})">Delete</button></td>
+          </tr>`;
+      });
+
+      table += `</tbody></table>`;
+      document.getElementById("content").innerHTML = table;
+    })
+    .catch(err => {
+      document.getElementById("content").innerHTML = "<p>Error loading employees.</p>";
+      console.error(err);
+    });
+}
+
+
+function addEmployee() {
+  document.getElementById("content").innerHTML = `
+    <h2>Add New Employee</h2>
+    <form id="addEmployeeForm">
+      <table>
+        <tr>
+          <td><label for="first_name">First Name:</label></td>
+          <td><input type="text" id="first_name" name="first_name" required></td>
+        </tr>
+        <tr>
+          <td><label for="last_name">Last Name:</label></td>
+          <td><input type="text" id="last_name" name="last_name" required></td>
+        </tr>
+        <tr>
+          <td><label for="email">Email:</label></td>
+          <td><input type="email" id="email" name="email" required></td>
+        </tr>
+        <tr>
+          <td><label for="phone_number">Phone:</label></td>
+          <td><input type="text" id="phone_number" name="phone_number" required></td>
+        </tr>
+        <tr>
+          <td><label for="position">Position:</label></td>
+          <td><input type="text" id="position" name="position" required></td>
+        </tr>
+        <tr>
+          <td><label for="date_of_birth">Date Of Birth:</label></td>
+          <td><input type="date" id="date_of_birth" name="date_of_birth" required></td>
+        </tr>
+        <tr>
+          <td><label for="department">Department:</label></td>
+          <td><input type="text" id="department" name="department" required></td>
+        </tr>
+        <tr>
+          <td><label for="joining_date">Joining Date:</label></td>
+          <td><input type="date" id="joining_date" name="joining_date" required></td>
+        </tr>
+        <tr>
+          <td><label for="username">Username:</label></td>
+          <td><input type="text" id="username" name="username" required></td>
+        </tr>
+        <tr>
+          <td><label for="password">Password:</label></td>
+          <td><input type="password" id="password" name="password" required></td>
+        </tr>
+        <tr>
+          <td colspan="2" style="text-align: center;">
+            <button type="submit">Add Employee</button>
+          </td>
+        </tr>
+      </table>
+    </form>
+  `;
+
+  document.getElementById("addEmployeeForm").onsubmit = async function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const employeeData = {};
+    formData.forEach((value, key) => {
+      employeeData[key] = value;
+    });
+
+    try {
+      const checkUsername = await fetch(`http://localhost:8080/api/check-username/${employeeData.username}`);
+      const checkPassword = await fetch(`http://localhost:8080/api/check-password/${employeeData.password}`);
+      
+      const usernameExists = await checkUsername.json();
+      const passwordExists = await checkPassword.json();
+      
+      if (usernameExists.exists) {
+        alert("Username already exists. Please choose a different username.");
+        return;
+      }
+      
+      if (passwordExists.exists) {
+        alert("Password already in use. Please choose a more secure, unique password.");
+        return;
+      }
+      
+      const res = await fetch("http://localhost:8080/api/employees", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(employeeData)
+      });
+      
+      if (res.ok) {
+        alert("Employee added successfully!");
+        viewEmployees(); 
+      } else {
+        alert("Failed to add employee.");
+      }
+    } catch (err) {
+      console.error("Add employee error:", err);
+      alert("An error occurred while adding the employee.");
+    }
+  };
+}
+
+
+function updateProfile() {
+  const employeeId = localStorage.getItem("employeeId");
+
+  fetch(`http://localhost:8080/api/profile/${employeeId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data) {
+        document.getElementById("content").innerHTML = `
+          <h2>Update Profile</h2>
+          <form id="updateForm">
+            <table>
+              <tr>
+                <th>Field</th>
+                <th>Value</th>
+              </tr>
+              <tr>
+                <td>First Name</td>
+                <td><input type="text" name="first_name" value="${data.first_name}" required></td>
+              </tr>
+              <tr>
+                <td>Last Name</td>
+                <td><input type="text" name="last_name" value="${data.last_name}" required></td>
+              </tr>
+              <tr>
+                <td>Email</td>
+                <td><input type="email" name="email" value="${data.email}" required></td>
+              </tr>
+              <tr>
+                <td>Phone</td>
+                <td><input type="text" name="phone_number" value="${data.phone_number}" required></td>
+              </tr>
+              <tr>
+                <td>Position</td>
+                <td><input type="text" name="position" value="${data.position}" required></td>
+              </tr>
+              <tr>
+                <td>Date Of Birth</td>
+                <td><input type="date" name="date_of_birth" value="${data.date_of_birth}" required></td>
+              </tr>
+              <tr>
+                <td>Department</td>
+                <td><input type="text" name="department" value="${data.department}" required></td>
+              </tr>
+              <tr>
+                <td>Joining Date</td>
+                <td><input type="date" name="joining_date" value="${data.joining_date}" required></td>
+              </tr>
+              <tr>
+          <td colspan="2" style="text-align: center;">
+            <button type="submit">Update Profile</button>
+          </td>
+        </tr>
+            </table>
+          </form>
+        `;
+
+        document.getElementById("updateForm").onsubmit = function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(this);
+          const updatedData = {};
+          formData.forEach((value, key) => {
+            if (value) updatedData[key] = value; 
+          });
+
+          fetch(`http://localhost:8080/api/profile/${employeeId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(updatedData)
+          })
+            .then(res => {
+              if (res.ok) {
+                alert("Profile updated successfully!");
+                viewProfile(); 
+              } else {
+                alert("Failed to update profile.");
+              }
+            })
+            .catch(err => {
+              console.error("Update error:", err);
+              alert("An error occurred while updating.");
+            });
+        };
+      } else {
+        document.getElementById("content").innerHTML = "<p>Profile not found.</p>";
+      }
+    })
+    .catch(err => {
+      console.error("Error fetching profile:", err);
+      document.getElementById("content").innerHTML = "<p>Error loading profile.</p>";
+    });
+}
+
+function editEmployees() {
+  fetch("http://localhost:8080/api/employees")
+    .then(res => res.json())
+    .then(data => {
+      if (!data.length) {
+        document.getElementById("content").innerHTML = "<p>No employees found.</p>";
+        return;
+      }
+
+      let table = ` 
+        <h2>Edit Employees</h2>
+        <table border="1" style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Position</th>
+              <th>Department</th>
+              <th>DOB</th>
+              <th>Joining Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      data.forEach(emp => {
+        table += `
+          <tr>
+            <td>${emp.employee_id}</td>
+            <td>${emp.first_name}</td>
+            <td>${emp.last_name}</td>
+            <td>${emp.email}</td>
+            <td>${emp.phone_number}</td>
+            <td>${emp.position}</td>
+            <td>${emp.department}</td>
+            <td>${emp.date_of_birth}</td>
+            <td>${emp.joining_date}</td>
+            <td><button onclick="openEditForm(${emp.employee_id})">Edit</button></td>
+          </tr>`;
+      });
+
+      table += `</tbody></table>`;
+      document.getElementById("content").innerHTML = table;
+    })
+    .catch(err => {
+      document.getElementById("content").innerHTML = "<p>Error loading employees.</p>";
+      console.error(err);
+    });
+}
+
+function openEditForm(employeeId) {
+  fetch(`http://localhost:8080/api/employees/${employeeId}`)
+    .then(res => res.json())
+    .then(employee => {
+      
+      const firstName = employee.first_name || '';
+      const lastName = employee.last_name || '';
+      const email = employee.email || '';
+      const phoneNumber = employee.phone_number || '';
+      const position = employee.position || '';
+      const department = employee.department || '';
+      const dateOfBirth = employee.date_of_birth || '';
+      const joiningDate = employee.joining_date || '';
+
+      document.getElementById("content").innerHTML = `
+        <h2>Edit Employee Details</h2>
+        <form id="editEmployeeForm">
+          <table>
+            <tr>
+              <td><label>First Name:</label></td>
+              <td><input type="text" name="first_name" value="${firstName}" ></td>
+            </tr>
+            <tr>
+              <td><label>Last Name:</label></td>
+              <td><input type="text" name="last_name" value="${lastName}" ></td>
+            </tr>
+            <tr>
+              <td><label>Email:</label></td>
+              <td><input type="email" name="email" value="${email}" ></td>
+            </tr>
+            <tr>
+              <td><label>Phone:</label></td>
+              <td><input type="text" name="phone_number" value="${phoneNumber}" ></td>
+            </tr>
+            <tr>
+              <td><label>Position:</label></td>
+              <td><input type="text" name="position" value="${position}" ></td>
+            </tr>
+            <tr>
+              <td><label>Department:</label></td>
+              <td><input type="text" name="department" value="${department}" ></td>
+            </tr>
+            <tr>
+              <td><label>Date of Birth:</label></td>
+              <td><input type="date" name="date_of_birth" value="${dateOfBirth}" ></td>
+            </tr>
+            <tr>
+              <td><label>Joining Date:</label></td>
+              <td><input type="date" name="joining_date" value="${joiningDate}" ></td>
+            </tr>
+            <tr>
+              <td colspan="2" style="text-align: center;">
+                <button type="submit">Save Changes</button>
+              </td>
+            </tr>
+          </table>
+        </form>
+      `;
+
+      document.getElementById("editEmployeeForm").onsubmit = function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const updatedEmployeeData = {};
+        formData.forEach((value, key) => {
+          updatedEmployeeData[key] = value;
+        });
+
+        fetch(`http://localhost:8080/api/employees/${employeeId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(updatedEmployeeData)
+        })
+          .then(res => {
+            if (res.ok) {
+              alert("Employee details updated successfully!");
+              viewEmployees(); 
+            } else {
+              alert("Failed to update employee details.");
+            }
+          })
+          .catch(err => {
+            console.error("Error updating employee:", err);
+            alert("An error occurred while updating employee.");
+          });
+      };
+    })
+    .catch(err => {
+      console.error("Error fetching employee details:", err);
+      alert("An error occurred while fetching employee details.");
+    });
+}
+
+
+
+
+  </script>
+</body>
+</html>
