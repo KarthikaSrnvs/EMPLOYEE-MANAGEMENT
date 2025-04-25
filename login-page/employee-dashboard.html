@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <h1>Welcome, Employee 👨‍💻</h1>
+
+  <div class="nav">
+    <button onclick="viewProfile()">View Profile</button>
+    <button onclick="updateProfile()">Update Profile</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <div id="content">
+    <!-- Profile details or update form -->
+  </div>
+
+  <script>
+    function viewProfile() {
+      document.getElementById("content").innerHTML = "<p>Your profile details will be shown here.</p>";
+    }
+
+    function updateProfile() {
+      document.getElementById("content").innerHTML = "<p>Update profile form will appear here.</p>";
+    }
+
+    function logout() {
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>
